@@ -1,10 +1,11 @@
-from flask import render_template 
+from flask import render_template , request
 from app import app
+from .forms import SignUpForm
 
 @app.route('/')
 def homepage():
 
-    people = ['John', 'Shoha', 'Diane', 'Peyton']
+    people = ['John', 'Shoha', 'Diane', 'Peyton', 'Mom']
 
     pokemons = [{
         'name':'pikachu',
@@ -21,14 +22,21 @@ def homepage():
 def contact_page():
     return render_template('contact.html')
 
-@app.route('/test')
-def test_page():
-    return {
-        'test':'testing'
-    }
+@app.route('/login')
+def login_page():
+    return ('login.html')
 
-@app.route('/testing2')
-def test_page2():
-    return {
-        'test':'testing'
-    }
+@app.route('/signup', methods=['GET','POST'])
+def signup_page():
+    form = SignUpForm()
+    print(request)
+    if request.method == "POST":
+        if form.validate():
+            username = form.username.data
+            email = form.email.data
+            password = form.password.data
+            print(f'username {username} | email | {email}, password | {password}')
+            # Add user to database
+        else: print('form invalid')
+
+    return render_template('signup.html', form = form)
