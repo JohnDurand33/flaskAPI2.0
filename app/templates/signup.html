@@ -1,16 +1,29 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h2>This is the Sign Up Page</h2>
+<h2 class="ps-4">This is the Sign Up Page</h2>
 
-<form class="col-4 border p-4" method="POST">
+<form class="col-4 border p-4 mb-4 mt-4" method="POST">
     {{ form.hidden_tag() }}
 
-    {{ form.username (class='form-control', placeholder='Username') }}
-    {{ form.email (class='form-control', placeholder='Email') }}
+    <div class="form-group">
+        <label for="username label">{{ form.username.label }}</label>
+        {{ form.username(class='form-control', placeholder='Username') }}
+    </div>
+    <div class="form-group">
+        <label for="email label">{{ form.email.label }}</label>
+    {{ form.email(class='form-control', placeholder='Email') }}
+    </div>
+    <div class="form-group">
+        <label for="password label">{{ form.password.label }}</label>
     {{ form.password(class='form-control', placeholder='Password') }}
+    </div>
+    <div class="form-group">
+        <label for="confirm_password label">{{ form.confirm_password.label }}</label>
     {{ form.confirm_password (class='form-control', placeholder='Confirm Password') }}
-    {{ form.submit (class='btn btn-primary', placeholder='') }}
+    </div>
+
+    {{ form.submit(class='btn btn-primary mt-3', placeholder='') }}
 </form>
 
 {% endblock %}

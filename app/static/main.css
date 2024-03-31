@@ -1,3 +1,14 @@
 #john {
     background-color: dodgerblue;
 }
+
+label {
+    padding-left: 2px;
+    padding-bottom: 3px;
+    padding-top: 3px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+form {
+    margin-left: 20px;
+    border-radius: 10px;
+}

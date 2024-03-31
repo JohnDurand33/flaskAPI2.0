@@ -13,10 +13,14 @@ class User(db.Model):
     password = db.Column(db.String, nullable=False)
     date_created = db.Column(db.DateTime,nullable=False, default=lambda: datetime.now(timezone.utc)) 
     # DateTime was imported, and translates to "TIMESTAMP" in SQL.  The documentation for datetime will explain how to reference SQL.  The lambda function insures that the datetime is not only pulled once.  By having a function, the program knows to run something every time a new record is created.
-    posts = db.relationship("Post", back_populates='author') 
-    # Needs to be capitalized when typing PYTHON's reference to the Post (class) table because in Python, classes are capitalized.  Back_populates increase functionality of FK created and is better then backref becasue it future proofs the db in case it becomes more complex
+    posts = db.relationship("Post", backref='author') 
+    # Needs to be capitalized when typing PYTHON's reference to the Post (class) table because in Python, classes are capitalized.  Back_populates increase functionality of FK created and is better then backref becasue it future proofs the db in case it becomes more complex.  #For now, use backref and research how back_populates should work#
 
     #this is necessary in Python for FK relationships.  'posts' will not display as a column, but this will allow us to call all of the data connected to a user thanks to the Post tables FK and the User tables 'posts' relationship that I typed above -> 'user.posts' will pull all of the data associated with said user instance now.
+    def __init__(self, username, email, password):
+        self.username = username
+        self.password = password
+        self.email = email
 
 class Post(db.Model):
     __tablename__ = 'post'
