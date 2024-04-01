@@ -32,7 +32,7 @@ def signup_page():
     form = SignUpForm()
     print(request)
     if request.method == "POST":
-        if form.validate():
+        if form.validate_on_submit():
             username = form.username.data
             email = form.email.data
             password = form.password.data
