@@ -1,6 +1,6 @@
 from flask import render_template , request, redirect, url_for
 from app import app
-from .forms import SignUpForm
+from .forms import SignUpForm, LogInForm
 from .models import User, db
 
 @app.route('/')
@@ -23,9 +23,31 @@ def homepage():
 def contact_page():
     return render_template('contact.html')
 
-@app.route('/login')
+@app.route('/login', methods=['GET', 'POST'])  # note:  Can have more than one route decorator for a single function.  This is useful for when you want to have multiple URLs that point to the same page.
 def login_page():
-    return render_template('login.html')
+        form = LogInForm()
+        if request.method == 'POST':
+            if form.validate():
+                username = form.username.data
+                password = form.password.data
+
+                # find usre in db
+
+                user = User.query.filter_by(username=username)
+                print(user)
+                user = User.query.filter_by(username=username).first()
+                print(user, 'ACTUAL OBJECT')
+
+                if user:
+                    if user.password == password:
+                        print('correct! log me in')
+                    else:
+                        print('incorrect password')
+
+                else:
+                    print('That username doesn\'t exist.')
+
+            return render_template('login.html', form=form)
 
 @app.route('/signup', methods=['GET','POST'])
 def signup_page():

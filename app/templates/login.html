@@ -3,5 +3,18 @@
 {% block content %}
 <h1>This is the Login Page</h1>
 
+<form class="col-4 border p-4 mb-4 mt-4" method="POST"> 
+    {{ form.hidden_tag() }}  
+<!-- cross site security tag -->
+    <div class="form-group">
+        <label for="username label">{{ form.username.label }}</label>
+        {{ form.username(class='form-control', placeholder='Username') }}
+    </div>
+    <div class="form-group">
+        <label for="password label">{{ form.password.label }}</label>
+    {{ form.password(class='form-control', placeholder='Password') }}
+
+    {{ form.submit(class='btn btn-primary mt-3', placeholder='') }}
+</form>
 
 {% endblock %}

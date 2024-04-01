@@ -1,11 +1,11 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timezone
-
+from flask_login import UserMixin
 db = SQLAlchemy()
 
 # Data Definition Language (DDL- used for setting up SQL databases) has different rules than Python.  
 
-class User(db.Model):
+class User(db.Model, UserMixin):
     __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True) # By assigning PK as true, integer translates to 'Serial'
     username = db.Column(db.String(50), nullable=False, unique=True)
