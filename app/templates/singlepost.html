@@ -1,0 +1,74 @@
+{% extends 'base.html' %} {% block content %}
+<h1 class="ms-3">Welcome To My Flask App!</h1>
+
+<a class="card mb-3 ms-3" style="width: 18rem">
+    <img src='{{ post["img_url"] }}' class="card-img-top" alt="..." />
+    <div class="card-body">
+        <h5 class="card-title text-decoration-none">{{ post.title }}</h5>
+        <p class="text-decoration-none">{{ post.author.username }}</p>
+        {% if post.caption %}
+        <p class="card-text text-decoration-none">{{post.caption}}</p>
+        {% endif %}
+    </div>
+</a>
+<!-- You can use bracket OR dot notation!! -->
+{% if current_user.is_authenticated %} {% if current_user.id == post.user_id %}
+<a
+    href='{{ url_for("update_post_page", post_id=post.id) }}'
+    class="btn btn-primary"
+    >Update</a
+>
+
+<!-- Button trigger modal -->
+<button
+    type="button"
+    class="btn btn-danger"
+    data-bs-toggle="modal"
+    data-bs-target="#staticBackdrop"
+>
+    Delete
+</button>
+
+<!-- Modal -->
+<div
+    class="modal fade"
+    id="staticBackdrop"
+    data-bs-backdrop="static"
+    data-bs-keyboard="false"
+    tabindex="-1"
+    aria-labelledby="staticBackdropLabel"
+    aria-hidden="true"
+>
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="staticBackdropLabel">
+                    Are you sure?
+                </h1>
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close"
+                ></button>
+            </div>
+            <div class="modal-body">This will delete your Post</div>
+            <div class="modal-footer">
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal"
+                >
+                    Cancel
+                </button>
+                <a
+                    href='{{ url_for("delete_post", post_id=post.id) }}'
+                    class="btn btn-danger"
+                    >Complete Delete</a
+                >
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endif %} {% endif %} {% endblock %}

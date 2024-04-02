@@ -28,7 +28,12 @@ class Post(db.Model):
     title = db.Column(db.String(100), nullable=False)
     img_url = db.Column(db.String, nullable=False)
     caption = db.Column(db.String(500))
-    date_created = db.Column(db.DateTime,nullable=False, default=lambda: datetime.now(timezone.utc)) 
+    date_created = db.Column(db.DateTime,nullable=False, default=lambda: datetime.now(timezone.utc))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable = False) # Reference the default table name and column using dot notation -> 'user.id'
     # REMEBER: Foreign Keys need to be thought out -> ERD
+    def __init__(self, title, caption, img_url, user_id):
+        self.title = title
+        self.caption = caption
+        self.img_url = img_url
+        self.user_id = user_id   # order of init needs to match order of route data input
 

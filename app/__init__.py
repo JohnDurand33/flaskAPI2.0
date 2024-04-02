@@ -19,4 +19,6 @@ def load_user(user_id):
     # return User.query.filter_by(id=user_id).first()
     return User.query.get(user_id)
 
+login_manager.login_view = 'login_page' # with the @login_required decorator, this will redirect to the login page if the user is not logged in.  Keeps users from accessing pages they shouldn't be able to access by typing in the address manually.
+
 from . import routes, models
