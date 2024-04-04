@@ -12,7 +12,7 @@ def get_all_posts():
     }, 200 
 
 @api.get('/posts/<post_id>') 
-def get_all_posts(post_id):
+def get_a_post_api(post_id):
     post = Post.query.get(post_id)
     if post:
         return {
@@ -28,18 +28,25 @@ def get_all_posts(post_id):
     
 @api.post('/posts/create') 
 def create_post_api():
-    if request.method == 'POST':
-        data = request.json
+    try:
+        if request.method == 'POST':
+            data = request.json
 
-        title = data['title']
-        img_url = data['img_url']
-        caption = data['caption']
-        user_id = data['user_id']
+            title = data['title']
+            img_url = data['img_url']
+            caption = data.get('caption', '')
+            user_id = data['user_id']
 
-        post = Post(title, caption, img_url, user_id)
-        db.session.add(post)
-        db.session.commit()
-        return {
-            'status': 'ok',
-            'message': 'Post created successfully',
-        }, 200
+            post = Post(title, caption, img_url, user_id)
+            db.session.add(post)
+            db.session.commit()
+            return {
+                'status': 'ok',
+                'message': 'Post created successfully',
+            }, 200
+    except:
+        return{
+            "ststus": "not ok",
+            'message':'Not enough information to complete a post'
+        }, 400
+    
