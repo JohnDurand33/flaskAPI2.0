@@ -3,16 +3,23 @@ from config import Config
 from flask_migrate import Migrate
 from .models import db, User
 from flask_login import LoginManager
+from flask_moment import Moment
+from .api import api
+from .ig import ig
 
 
 app = Flask(__name__)
 app.config.from_object(Config)          # Global variable instantiation to help manage across the application.
+app.register_blueprint(ig)
+app.register_blueprint(api)
+
+
 
 db.init_app(app)
 migrate = Migrate(app, db)  # Same as this line -> migrate = Migrate(), then on following line: "migrate.init_app(app, db)".  
-
 #Login Manager setup
 login_manager = LoginManager(app)
+moment = Moment(app)
 
 @login_manager.user_loader
 def load_user(user_id):

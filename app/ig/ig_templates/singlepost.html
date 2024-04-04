@@ -1,20 +1,23 @@
 {% extends 'base.html' %} {% block content %}
 <h1 class="ms-3">Welcome To My Flask App!</h1>
 
-<a class="card mb-3 ms-3" style="width: 18rem">
+<a class="card mb-3 ms-3 p-0 no-underline" style="width: 18rem">
     <img src='{{ post["img_url"] }}' class="card-img-top" alt="..." />
-    <div class="card-body">
-        <h5 class="card-title text-decoration-none">{{ post.title }}</h5>
-        <p class="text-decoration-none">{{ post.author.username }}</p>
-        {% if post.caption %}
-        <p class="card-text text-decoration-none">{{post.caption}}</p>
+    <div class="card-body p-0">
+        <h4 class="card-title underline ps-3">{{ post.title }}</h4>
+        <h5 class="card-text ps-3">{{ post.author.username.title() }}</h5>
+        {% if post.caption %} 
+        <h6 class="card-text ps-3">"{{post.caption}}"</h6>
         {% endif %}
+        <div class="card-footer text-muted p-1">Posted {{ moment(post.date_created).fromNow() }}</div>
     </div>
 </a>
+Like Count: {{ post.like_count() }}
 <!-- You can use bracket OR dot notation!! -->
-{% if current_user.is_authenticated %} {% if current_user.id == post.user_id %}
+{% if current_user.is_authenticated %} {% if current_user.id == post.user_id %} 
+
 <a
-    href='{{ url_for("update_post_page", post_id=post.id) }}'
+    href='{{ url_for("ig.update_post_page", post_id=post.id) }}'
     class="btn btn-primary"
     >Update</a
 >
@@ -62,7 +65,7 @@
                     Cancel
                 </button>
                 <a
-                    href='{{ url_for("delete_post", post_id=post.id) }}'
+                    href='{{ url_for("ig.delete_post", post_id=post.id) }}'
                     class="btn btn-danger"
                     >Complete Delete</a
                 >

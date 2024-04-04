@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    {% if current_user.is_authenticated %}
+        <ul class="list-group">
+            {% for u in users %}
+                {% if u.id != current_user.id %}
+                <li class="list-group-item">{{ u.username }}
+                    {% if u in current_user.followed.all() %}
+    <!-- .all() needed here because in models.py, the "lazy" attribute for followed was changed to dynamic.  If not changed, .all() is not necessary! -->
+                        <a class='btn btn-danger' href='{{ url_for("ig.unfollow", user_id = u.id)}}'>Unfollow</a>
+                    {% else %}
+                        <a class="btn btn-primary" href='{{ url_for("ig.follow", user_id = u.id)}}'>Follow</a>
+                    {% endif %}
+                </li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    {% else %}
+        <h2>Please Log in to see the other Users</h2>
+    {% endif %}
+
+
+{% endblock %}

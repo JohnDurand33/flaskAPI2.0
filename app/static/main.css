@@ -12,3 +12,15 @@ form {
     margin-left: 20px;
     border-radius: 10px;
 }
+
+.no-underline, .no-underline:visited, .no-underline:hover, .no-underline:active, .no-underline:focus {
+    text-decoration: none;
+}
+
+.underline {
+    text-decoration: underline;
+}
+
+.my-heart {
+    color: tomato;
+}
