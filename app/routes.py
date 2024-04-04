@@ -1,10 +1,11 @@
 from flask import render_template , request, redirect, url_for, session, flash, get_flashed_messages, abort
 from app import app
 from .forms import SignUpForm, LogInForm
-from .models import User, Post, db, like2
+from .models import User, db, like2
 from flask_login import login_user, logout_user, login_required, current_user
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
+from werkzeug.security import check_password_hash
 
 ############ AUTH ############
 
@@ -17,11 +18,12 @@ def login_page():
             password = form.password.data
 
             # find user in db
-
             user = User.query.filter_by(username=username).first()
+            print(user.password, password)
 
             if user:
-                if user.password == password:
+                print(user.username, user.password, user.email)
+                if check_password_hash(user.password, password):
                     login_user(user)
                     flash('Logged in successfully', 'success')
                     return redirect(url_for('ig.homepage'))
@@ -46,10 +48,10 @@ def signup_page():
             username = form.username.data
             email = form.email.data
             password = form.password.data
-            print(f'username {username} | email | {email}, password | {password}')
             
             # Add user to database
             user = User(username, email, password)
+            print(user.username, user.password, password)
             # user.username = username
             # user.email = email
             # user.password = password   # NOT NEEDED WITH __init__ added for class User.  Now just add vars to User parameters instead of leaving User() empty.

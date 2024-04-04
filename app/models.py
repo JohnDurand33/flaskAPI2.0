@@ -2,6 +2,7 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timezone
 from flask_login import UserMixin
 db = SQLAlchemy()
+from werkzeug.security import generate_password_hash
 
 # Data Definition Language (DDL- used for setting up SQL databases) has different rules than Python.  
 followers = db.Table('followers',
@@ -38,7 +39,7 @@ class User(db.Model, UserMixin):
     #this is necessary in Python for FK relationships.  'posts' will not display as a column, but this will allow us to call all of the data connected to a user thanks to the Post tables FK and the User tables 'posts' relationship that I typed above -> 'user.posts' will pull all of the data associated with said user instance now.
     def __init__(self, username, email, password):
         self.username = username
-        self.password = password
+        self.password = generate_password_hash(password)
         self.email = email
 
 class Post(db.Model):

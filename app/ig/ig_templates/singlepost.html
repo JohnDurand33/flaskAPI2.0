@@ -1,18 +1,17 @@
 {% extends 'base.html' %} {% block content %}
-<h1 class="ms-3">Welcome To My Flask App!</h1>
-
-<a class="card mb-3 ms-3 p-0 no-underline" style="width: 18rem">
-    <img src='{{ post["img_url"] }}' class="card-img-top" alt="..." />
-    <div class="card-body p-0">
-        <h4 class="card-title underline ps-3">{{ post.title }}</h4>
-        <h5 class="card-text ps-3">{{ post.author.username.title() }}</h5>
-        {% if post.caption %} 
-        <h6 class="card-text ps-3">"{{post.caption}}"</h6>
-        {% endif %}
-        <div class="card-footer text-muted p-1">Posted {{ moment(post.date_created).fromNow() }}</div>
-    </div>
-</a>
-Like Count: {{ post.like_count() }}
+<div class="d-flex flex-column align-items-center">
+    <a class="card mb-3 ms-3 p-0 no-underline" style="width: 18rem">
+        <img src='{{ post["img_url"] }}' class="card-img-top" alt="..." />
+        <div class="card-body p-0">
+            <h4 class="card-title underline ps-3">{{ post.title }}</h4>
+            <h5 class="card-text ps-3">{{ post.author.username.title() }}</h5>
+            {% if post.caption %} 
+            <h6 class="card-text ps-3">"{{post.caption}}"</h6>
+            {% endif %}
+            <div class="card-footer text-muted p-1">Posted {{ moment(post.date_created).fromNow() }}</div>
+        </div>
+    </a>
+</div>
 <!-- You can use bracket OR dot notation!! -->
 {% if current_user.is_authenticated %} {% if current_user.id == post.user_id %} 
 
@@ -74,4 +73,13 @@ Like Count: {{ post.like_count() }}
     </div>
 </div>
 
-{% endif %} {% endif %} {% endblock %}
+{% endif %} {% endif %} 
+
+    {% if current_user in post.likers2 %}
+    <a href="{{ url_for('ig.unlike_post2', post_id=post.id)}}" class="d-flex flex-column align-items-center my-heart no-underline ps-3 pb-3" style><i class="fa-solid fa-heart"></i></a>
+    {% else %}
+    <a href="{{ url_for('ig.like_post2', post_id=post.id)}}" class="d-flex flex-column align-items-center my-heart no-underline ps-3 pb-3"><i class="fa-regular fa-heart"></i></a>
+    {% endif %}
+    <p class="d-flex flex-column align-items-center">Like Count: {{ post.like_count() }}</p> 
+                
+{% endblock %}
