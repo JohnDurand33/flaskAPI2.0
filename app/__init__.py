@@ -4,6 +4,7 @@ from flask_migrate import Migrate
 from .models import db, User
 from flask_login import LoginManager
 from flask_moment import Moment
+from flask_cors import CORS
 from .api import api
 from .ig import ig
 
@@ -14,6 +15,7 @@ app.register_blueprint(ig)
 app.register_blueprint(api)
 
 
+CORS(app)
 
 db.init_app(app)
 migrate = Migrate(app, db)  # Same as this line -> migrate = Migrate(), then on following line: "migrate.init_app(app, db)".  
