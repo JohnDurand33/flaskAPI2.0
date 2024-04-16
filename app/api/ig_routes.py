@@ -43,7 +43,7 @@ def create_post_api():
             return {
                 'status': 'ok',
                 'message': 'Post created successfully',
-            }, 200
+            }, 201
     except:
         return{
             "ststus": "not ok",
