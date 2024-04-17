@@ -39,7 +39,7 @@
                         {% if p.caption %}
                             <h6 class="card-text ps-3">"{{p.caption}}"</h6>
                         {% endif %}
-                            <div class="card-footer text-muted p-1">{{ moment(p.date_created).fromNow() }}</div>
+                            <div class="card-footer text-muted p-1">Posted: {{ moment(p.date_created).fromNow() }}</div>
                         <!-- You can use bracket OR dot notation!! -->
                     </div>
                 </a>

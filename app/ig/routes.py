@@ -50,7 +50,6 @@ def create_post_page():
 @ig.route('/posts/update/<post_id>', methods=['GET', 'POST'])
 @login_required
 def update_post_page(post_id):
-
     post = Post.query.get(post_id) #OR Post.query.filter_by(post_id=post_id).first()
     if current_user.id != post.user_id:
         return redirect(url_for('ig.homepage'))
@@ -70,7 +69,7 @@ def update_post_page(post_id):
 
     return render_template('updatepost.html', post=post, form=form)
 
-@ig.route('/posts/delete/<post_id>', methods=['GET', 'POST'])
+@ig.route('/posts/delete/<post_id>', methods=['GET', 'POST'])  
 @login_required
 def delete_post(post_id):
 
@@ -82,51 +81,29 @@ def delete_post(post_id):
 
     return redirect(url_for('ig.homepage'))
 
-# @ig.route('/posts/like/<post_id>')
+#######  Below were ok for Flask only, but were modifed and moved to api folder for React-Friendly versioning ############
+
+# @ig.route('/posts/like/<post_id>')  ******DEPRECATED for React friendly version moved to api routes file*********
 # @login_required
-# def like_post(post_id):
-#     like = Like.query.filter_by(post_id=post_id).filter_by(user_id=current_user.id).first()
-#     if like:
-#         return redirect(url_for('ig.homepage'))
-
-#     like = Like(current_user.id, post_id)
-
-#     db.session.add(like)
-#     db.session.commit()
-
-#     return redirect(url_for('ig.homepage'))
-
-
-@ig.route('/posts/like/<post_id>')
-@login_required
-def like_post2(post_id):
-    post = Post.query.get(post_id)
-    if post:
-        current_user.liked_post2.append(post) #CAN I ADD A WHERE STATEMENT TO INCLUDE A POST_ID TO DELETE ALL THE INSTANCES?
-        db.session.commit()
-
-    return redirect(url_for('ig.homepage'))
-
-# @ig.route('/posts/unlike/<post_id>')
-# @login_required
-# def unlike_post(post_id):
-#     like = Like.query.filter_by(post_id=post_id).filter_by(user_id=current_user.id).first() # using first for simplicity
-
-#     if like:
-#         db.session.delete(like)
+# def like_post2(post_id):
+#     post = Post.query.get(post_id)
+#     if post:
+#         current_user.liked_post2.append(post) #CAN I ADD A WHERE STATEMENT TO INCLUDE A POST_ID TO DELETE ALL THE INSTANCES?
 #         db.session.commit()
+
 #     return redirect(url_for('ig.homepage'))
 
-@ig.route('/posts/unlike/<post_id>')
-@login_required
-def unlike_post2(post_id):
-    post = current_user.liked_post2.filter_by(id=post_id).first()
-    print(current_user.liked_post2)
-    if post in current_user.liked_post2.all():
-        current_user.liked_post2.remove(post)
-        db.session.commit()
 
-    return redirect(url_for('ig.homepage'))
+# @ig.route('/posts/unlike/<post_id>')  ******DEPRECATED for React friendly version moved to api routes file*********
+# @login_required
+# def unlike_post2(post_id):
+#     post = current_user.liked_post2.filter_by(id=post_id).first()
+#     print(current_user.liked_post2)
+#     if post in current_user.liked_post2.all():
+#         current_user.liked_post2.remove(post)
+#         db.session.commit()
+
+#     return redirect(url_for('ig.homepage'))
 
 
 #############  FOLLOWING ##################

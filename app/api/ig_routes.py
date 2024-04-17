@@ -1,10 +1,11 @@
-from flask import request
+from flask import request, jsonify
 from . import api
-from ..models import Post, db
+from ..models import User, Post, db
 
 @api.get('/posts') #route shortcut for get request = -> 'get' instead of 'route' in decorator
+# @token_required
 def get_all_posts():
-    posts = Post.query.all()
+    posts = Post.query.order_by(Post.date_created.desc()).all() #.desc() orders the posts by date created in descending order
     return {
         'status': 'ok',
         'results': len(posts),
@@ -46,7 +47,92 @@ def create_post_api():
             }, 201
     except:
         return{
-            "ststus": "not ok",
+            "status": "not ok",
             'message':'Not enough information to complete a post'
         }, 400
     
+
+@api.post('/posts/like/<post_id>')
+# @login_required
+def like_post_API(post_id):
+    post = Post.query.get(post_id)
+    data = request.json
+    user_id = data['user_id']
+    current_user = User.query.get(user_id)
+    if post:
+        if post not in current_user.liked_post2:
+            current_user.liked_post2.append(post)
+            db.session.commit()
+
+            return jsonify({
+                "status": "ok",
+                "message": "Post liked successfully"
+            })
+        
+        else:
+            return {
+                "status": "not ok",
+                "message": "Post not found"
+            }, 404
+
+
+@api.post('/posts/unlike/<post_id>')
+# @login_required
+def unlike_post_API(post_id):
+    data = request.json
+    user_id = data['user_id']
+    current_user = User.query.get(user_id)
+    post = current_user.liked_post2.filter_by(id=post_id).first()
+
+    if post:
+        current_user.liked_post2.remove(post)
+        db.session.commit()
+
+        return jsonify({
+            "status": "ok",
+            "message":"Post unliked successfully!"
+        })
+    
+    else:
+        return {
+            "status": "not ok",
+            "message": "Post not found"
+        }, 404
+
+api.post('/signup')
+def sign_up_API():
+    try:
+        if request.method == 'POST':
+            data = request.json
+
+            username = data['username']
+            email = data['email']
+            password = data['password']
+
+            user = User.query.filter_by(username=username).first()
+            if user:
+                return {
+                    'status': 'not ok',
+                    'message': 'User already exists'
+                }, 400
+
+            user = User.query.filter_by(email=email).first()
+            if user:
+                return {
+                    'status': 'not ok',
+                    'message': 'User already exists'
+                }, 400
+
+            user = User(username, email, password)
+
+            db.session.add(user)
+            db.session.commit()
+            return {
+                'status': 'ok',
+                'message': 'Post created successfully',
+            }, 201
+    except:
+        return {
+            "status": "not ok",
+            'message': 'User already Exists'
+        }, 400

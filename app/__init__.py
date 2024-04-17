@@ -15,7 +15,7 @@ app.register_blueprint(ig)
 app.register_blueprint(api)
 
 
-CORS(app)
+CORS(app, resources={"http://127.0.0.1: 5000/api/signup": {"origins": "*"}})
 
 db.init_app(app)
 migrate = Migrate(app, db)  # Same as this line -> migrate = Migrate(), then on following line: "migrate.init_app(app, db)".  

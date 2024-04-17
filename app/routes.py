@@ -39,32 +39,32 @@ def login_page():
 
     return render_template('login.html', form=form)
 
-@app.route('/signup', methods=['GET','POST'])
-def signup_page():
-    form = SignUpForm()
-    print(request)
-    if request.method == "POST":
-        if form.validate_on_submit():
-            username = form.username.data
-            email = form.email.data
-            password = form.password.data
+# @app.route('/signup', methods=['GET','POST'])
+# def signup_page():
+#     form = SignUpForm()
+#     print(request)
+#     if request.method == "POST":
+#         if form.validate_on_submit():
+#             username = form.username.data
+#             email = form.email.data
+#             password = form.password.data
             
-            # Add user to database
-            user = User(username, email, password)
-            print(user.username, user.password, password)
-            # user.username = username
-            # user.email = email
-            # user.password = password   # NOT NEEDED WITH __init__ added for class User.  Now just add vars to User parameters instead of leaving User() empty.
+#             # Add user to database
+#             user = User(username, email, password)
+#             print(user.username, user.password, password)
+#             # user.username = username
+#             # user.email = email
+#             # user.password = password   # NOT NEEDED WITH __init__ added for class User.  Now just add vars to User parameters instead of leaving User() empty.
 
-            db.session.add(user)
-            db.session.commit()
-            flash('User created successfully', 'success')
+#             db.session.add(user)
+#             db.session.commit()
+#             flash('User created successfully', 'success')
 
-            return redirect(url_for('login_page'))
+#             return redirect(url_for('login_page'))
 
-        flash('form invalid', 'danger')
+#         flash('form invalid', 'danger')
 
-    return render_template('signup.html', form = form)
+#     return render_template('signup.html', form = form)
 
 
 @app.route('/logout')
