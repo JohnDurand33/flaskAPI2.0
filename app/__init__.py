@@ -8,14 +8,13 @@ from flask_cors import CORS
 from .api import api
 from .ig import ig
 
-
 app = Flask(__name__)
-app.config.from_object(Config)          # Global variable instantiation to help manage across the application.
+CORS(app)
+
+# Global variable instantiation to help manage across the application.
+app.config.from_object(Config)
 app.register_blueprint(ig)
 app.register_blueprint(api)
-
-
-CORS(app, resources={"http://127.0.0.1: 5000/api/signup": {"origins": "*"}})
 
 db.init_app(app)
 migrate = Migrate(app, db)  # Same as this line -> migrate = Migrate(), then on following line: "migrate.init_app(app, db)".  

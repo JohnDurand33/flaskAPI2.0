@@ -1,6 +1,8 @@
 from flask import request, jsonify
 from . import api
 from ..models import User, Post, db
+from flask import Flask
+
 
 @api.get('/posts') #route shortcut for get request = -> 'get' instead of 'route' in decorator
 # @token_required
@@ -99,10 +101,10 @@ def unlike_post_API(post_id):
             "message": "Post not found"
         }, 404
 
-api.post('/signup')
+api.route('/signup', methods=['POST', 'OPTIONS'])
 def sign_up_API():
     try:
-        if request.method == 'POST':
+        if request.method == 'POST' or request.method == 'OPTIONS':
             data = request.json
 
             username = data['username']
