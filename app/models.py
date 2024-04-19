@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from flask_login import UserMixin
 db = SQLAlchemy()
 from werkzeug.security import generate_password_hash
+from secrets import token_hex
 
 # Data Definition Language (DDL- used for setting up SQL databases) has different rules than Python.  
 followers = db.Table('followers',
@@ -16,18 +17,19 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(100), nullable=False, unique=True)
     password = db.Column(db.String, nullable=False)
     date_created = db.Column(db.DateTime,nullable=False, default=lambda: datetime.now(timezone.utc))
-    posts = db.relationship("Post", backref='author') 
+    posts = db.relationship("Post", backref='author')
+    token = db.Column(db.String(100), nullable=True)
     # liked_posts = db.relationship("Post", secondary="like")  # below line is how to manage likes without a Like table
     liked_post2 = db.relationship("Post", secondary="like2", lazy='dynamic') # gives a list of posts from current_user.  When user likes a post, they provide  apost id, which can be used as the query variable for the Post table, and then append it to the liked_posts column.  The system automatically commits to this table so your commit isn't needed
     followed = db.relationship("User", 
-                                secondary='followers', 
-                                lazy='dynamic',
-                                # backref='followers',  
-                                # above is normal way to name backref, but below shows a way to change your backref specifications
-                                backref=db.backref('followers', lazy='dynamic'),
-                                primaryjoin= (followers.c.follower_id == id),
-                                secondaryjoin= (followers.c.followed_id == id))
-    
+        secondary='followers', 
+        lazy='dynamic',
+        # backref='followers',  
+        # above is normal way to name backref, but below shows a way to change your backref specifications
+        backref=db.backref('followers', lazy='dynamic'),
+        primaryjoin= (followers.c.follower_id == id),
+        secondaryjoin= (followers.c.followed_id == id))
+
 
     # DateTime was imported, and translates to "TIMESTAMP" in SQL.  The documentation for datetime will explain how to reference SQL.  The lambda function insures that the datetime is not only pulled once.  By having a function, the program knows to run something every time a new record is created.
 
@@ -39,8 +41,23 @@ class User(db.Model, UserMixin):
     #this is necessary in Python for FK relationships.  'posts' will not display as a column, but this will allow us to call all of the data connected to a user thanks to the Post tables FK and the User tables 'posts' relationship that I typed above -> 'user.posts' will pull all of the data associated with said user instance now.
     def __init__(self, username, email, password):
         self.username = username
-        self.password = generate_password_hash(password)
         self.email = email
+        self.password = generate_password_hash(password)
+        self.token = token_hex(16) #if token expires you would need to put that logic in the login route for flask.  Therre is a tokenization package, RESEARCH!!!!!!!
+
+    def __repr__(self) -> str:
+        return{self.username}
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'username': self.username,
+            'email': self.email,
+            'date_created': self.date_created,
+            'token': self.token,
+            'followed_count': len(self.followers.all()),
+            'following_count': len(self.followed.all())
+        }
 
 class Post(db.Model):
     __tablename__ = 'post'
@@ -48,7 +65,7 @@ class Post(db.Model):
     title = db.Column(db.String(100), nullable=False)
     img_url = db.Column(db.String, nullable=False)
     caption = db.Column(db.String(500))
-    date_created = db.Column(db.DateTime,nullable=False, default=lambda: datetime.now(timezone.utc))
+    date_created = db.Column(db.DateTime,nullable=False, default= lambda: datetime.now(timezone.utc))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable = False) # Reference the default table name and column using dot notation - 'user id'
     # likers = db.relationship("User", secondary="like")
     likers2 = db.relationship("User", secondary="like2") # added 2 to secondary when using variable table below like_count function below
@@ -56,8 +73,8 @@ class Post(db.Model):
 
     def __init__(self, title, caption, img_url, user_id):
         self.title = title
-        self.caption = caption
         self.img_url = img_url
+        self.caption = caption
         self.user_id = user_id   # order of init needs to match order of route data input
 
     def like_count(self):

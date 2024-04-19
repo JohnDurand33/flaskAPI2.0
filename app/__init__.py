@@ -9,14 +9,21 @@ from .api import api
 from .ig import ig
 
 app = Flask(__name__)
-CORS(app)
 
 # Global variable instantiation to help manage across the application.
 app.config.from_object(Config)
+
+CORS(app, resources={r"/api/*": {
+    "origins": "*",
+    "allow_headers": ["Content-Type", "Authorization"],
+    "methods": ["OPTIONS", "POST", "GET"]
+}})
+
 app.register_blueprint(ig)
-app.register_blueprint(api)
+app.register_blueprint(api, url_prefix='/api')
 
 db.init_app(app)
+
 migrate = Migrate(app, db)  # Same as this line -> migrate = Migrate(), then on following line: "migrate.init_app(app, db)".  
 #Login Manager setup
 login_manager = LoginManager(app)

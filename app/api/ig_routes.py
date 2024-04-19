@@ -1,7 +1,7 @@
 from flask import request, jsonify
 from . import api
 from ..models import User, Post, db
-from flask import Flask
+from werkzeug.security import check_password_hash
 
 
 @api.get('/posts') #route shortcut for get request = -> 'get' instead of 'route' in decorator
@@ -40,7 +40,7 @@ def create_post_api():
             caption = data.get('caption', '')
             user_id = data['user_id']
 
-            post = Post(title, caption, img_url, user_id)
+            post = Post(title, img_url, caption, user_id)
             db.session.add(post)
             db.session.commit()
             return {
@@ -100,41 +100,82 @@ def unlike_post_API(post_id):
             "status": "not ok",
             "message": "Post not found"
         }, 404
+    
 
-api.route('/signup', methods=['POST', 'OPTIONS'])
+@api.route('/signup', methods=['POST', 'OPTIONS'])
 def sign_up_API():
+    if request.method == 'OPTIONS':
+        return {}, 204
+    
     try:
-        if request.method == 'POST' or request.method == 'OPTIONS':
-            data = request.json
+        data = request.json
 
-            username = data['username']
-            email = data['email']
-            password = data['password']
+        username = data.get('username')
+        email = data.get('email')
+        password = data.get('password')
 
-            user = User.query.filter_by(username=username).first()
-            if user:
-                return {
-                    'status': 'not ok',
-                    'message': 'User already exists'
-                }, 400
+        if not (username and email and password):  # Check if all fields are provided
+            return jsonify({
+                'status': 'not ok',
+                'message': 'Missing username, email, or password'
+            }), 400
 
-            user = User.query.filter_by(email=email).first()
-            if user:
-                return {
-                    'status': 'not ok',
-                    'message': 'User already exists'
-                }, 400
+        if User.query.filter_by(username=username).first():
+            return jsonify({
+                'status': 'not ok',
+                'message': 'Username already exists'
+            }), 400
 
-            user = User(username, email, password)
+        if User.query.filter_by(email=email).first():
+            return jsonify({
+                'status': 'not ok',
+                'message': 'Email already registered'
+            }), 400
 
-            db.session.add(user)
-            db.session.commit()
-            return {
-                'status': 'ok',
-                'message': 'Post created successfully',
-            }, 201
+        # Password is hashed in the init
+        user = User(username=username, email=email, password=password)
+
+        db.session.add(user)
+        db.session.commit()
+
+        return jsonify({
+            'status': 'ok',
+            'message': 'User created successfully'
+        }), 201
+
+    except Exception as e:  # Catch exceptions more explicitly if possible
+        return jsonify({
+            'status': 'not ok',
+            'message': 'An error occurred during signup',
+            'details': str(e)
+        }), 500
+
+
+@api.route('/login', methods=['POST'])
+def login_API():
+    try:
+        data = request.json
+        print
+        username = data['username']
+        password = data['password']
+
+        user = User.query.filter_by(username=username).first()
+
+        if not user:
+            return jsonify({
+                'status': 'not ok',
+                'message': 'User / password combination not found'
+            }), 400
+
+        if check_password_hash(user.password, password):
+            return jsonify({
+                'status':'ok',
+                'message':'User logged in successfully',
+                'user': 'user.to_dict()',
+            }), 200
+        #Return user info as needed, in reality you want to create expiration system(flask token package!)
     except:
-        return {
-            "status": "not ok",
-            'message': 'User already Exists'
-        }, 400
+        return jsonify({
+            'status': 'not ok',
+            'message': 'User / password combination not found',
+        }), 400
