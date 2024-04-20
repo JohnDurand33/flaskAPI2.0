@@ -2,12 +2,14 @@ from flask import request, jsonify
 from . import api
 from ..models import User, Post, db
 from werkzeug.security import check_password_hash
+import base64
+from ..apiauthhelper import token_auth_required
 
 
 @api.get('/posts') #route shortcut for get request = -> 'get' instead of 'route' in decorator
-# @token_required
-def get_all_posts():
+def get_all_posts_API():
     posts = Post.query.order_by(Post.date_created.desc()).all() #.desc() orders the posts by date created in descending order
+    
     return {
         'status': 'ok',
         'results': len(posts),
@@ -29,8 +31,9 @@ def get_a_post_api(post_id):
             'message': 'post not found'
         }, 404
     
-@api.post('/posts/create') 
-def create_post_api():
+@api.post('/posts/create')
+@token_auth_required
+def create_post_api(user):
     try:
         if request.method == 'POST':
             data = request.json
@@ -38,9 +41,9 @@ def create_post_api():
             title = data['title']
             img_url = data['img_url']
             caption = data.get('caption', '')
-            user_id = data['user_id']
-
-            post = Post(title, img_url, caption, user_id)
+            
+            
+            post = Post(title, img_url, caption, user.id)
             db.session.add(post)
             db.session.commit()
             return {
@@ -55,12 +58,11 @@ def create_post_api():
     
 
 @api.post('/posts/like/<post_id>')
-# @login_required
-def like_post_API(post_id):
+@token_auth_required
+def like_post_API(post_id, user):
     post = Post.query.get(post_id)
-    data = request.json
-    user_id = data['user_id']
-    current_user = User.query.get(user_id)
+
+    current_user = User.query.filter_by(user.id).first()
     if post:
         if post not in current_user.liked_post2:
             current_user.liked_post2.append(post)
@@ -76,14 +78,18 @@ def like_post_API(post_id):
                 "status": "not ok",
                 "message": "Post not found"
             }, 404
+    else:
+        return {
+            "status": "not ok",
+            "message": "Post not found"
+        }, 404
 
 
 @api.post('/posts/unlike/<post_id>')
-# @login_required
-def unlike_post_API(post_id):
-    data = request.json
-    user_id = data['user_id']
-    current_user = User.query.get(user_id)
+@token_auth_required
+def unlike_post_API(post_id, user):
+    
+    current_user = User.query.filter_by(user.id).first()
     post = current_user.liked_post2.filter_by(id=post_id).first()
 
     if post:
@@ -154,24 +160,33 @@ def sign_up_API():
 @api.route('/login', methods=['POST'])
 def login_API():
     try:
-        data = request.json
-        print
-        username = data['username']
-        password = data['password']
+        if "Authorization" in request.headers:
+            val = request.headers['Authorization']
+            encoded_version = val.split()[1]
+            
+            x = base64.b64decode(encoded_version.encode('ascii')).decode('ascii')
+            username, password = x.split(':')
+            print(username)
 
+        else:
+            return {
+                'status':'not ok',
+                'message':'No Authorization header provided'
+            }, 401
+        
         user = User.query.filter_by(username=username).first()
 
         if not user:
             return jsonify({
                 'status': 'not ok',
-                'message': 'User / password combination not found'
+                'message': 'No User'
             }), 400
 
         if check_password_hash(user.password, password):
             return jsonify({
                 'status':'ok',
                 'message':'User logged in successfully',
-                'user': 'user.to_dict()',
+                'user': user.to_dict(), # wrapping this in quotes will pass this string as the only user attribute
             }), 200
         #Return user info as needed, in reality you want to create expiration system(flask token package!)
     except:

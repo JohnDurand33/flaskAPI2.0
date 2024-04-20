@@ -8,6 +8,7 @@ from flask_cors import CORS
 from .api import api
 from .ig import ig
 
+
 app = Flask(__name__)
 
 # Global variable instantiation to help manage across the application.

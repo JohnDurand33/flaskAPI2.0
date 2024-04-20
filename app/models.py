@@ -34,7 +34,7 @@ class User(db.Model, UserMixin):
     # DateTime was imported, and translates to "TIMESTAMP" in SQL.  The documentation for datetime will explain how to reference SQL.  The lambda function insures that the datetime is not only pulled once.  By having a function, the program knows to run something every time a new record is created.
 
     ###### - IMPORTANT #########
-    # posts dn.relationship("TableName", backref="name for instance") - Creates an object user(instance).posts that returns all the table data from the Posts table from the user instance based on the user's PK (FK in Posts table is also needed to make this happen.).  Needs to be capitalized when typing PYTHON's reference to the Post (class) table because in Python, classes are capitalized.  Back_populates increase functionality of FK created and is better then backref becasue it future proofs the db in case it becomes more complex.  #For now, use backref and research how back_populates should work#
+    # posts db.relationship("TableName", backref="name for instance") - Creates an object user(instance).posts that returns all the table data from the Posts table from the user instance based on the user's PK (FK in Posts table is also needed to make this happen.).  Needs to be capitalized when typing PYTHON's reference to the Post (class) table because in Python, classes are capitalized.  Back_populates increase functionality of FK created and is better then backref becasue it future proofs the db in case it becomes more complex.  #For now, use backref and research how back_populates should work#
 
     #secondary - for join tables - secondary is the name of the Table being joined by the join table.lowercase ('Like" table joins Users and posts.  So put "like") 
 
@@ -71,7 +71,7 @@ class Post(db.Model):
     likers2 = db.relationship("User", secondary="like2") # added 2 to secondary when using variable table below like_count function below
     # REMEBER: Foreign Keys need to be thought out -> ERD
 
-    def __init__(self, title, caption, img_url, user_id):
+    def __init__(self, title, img_url, caption, user_id):
         self.title = title
         self.img_url = img_url
         self.caption = caption
@@ -80,7 +80,7 @@ class Post(db.Model):
     def like_count(self):
         return len(self.likers2)
     
-    def to_dict(self, user=None):
+    def to_dict(self):
         return {
             'id': self.id,
             'title': self.title,
@@ -91,7 +91,6 @@ class Post(db.Model):
             'author': self.author.username,
             'like_count': self.like_count(),
             # 'liked': user in self.likers2
-            'liked':False
         }
 
 like2 = db.Table('like2',  # good when you don't need to reference your joined table directly
@@ -112,7 +111,12 @@ like2 = db.Table('like2',  # good when you don't need to reference your joined t
 
 ##### IMPORTANT $$$$$ = joined tables that never have to be referenced directly (by their id).  joined tables should be referenced through foreign keys
 
+# class UserSchema(Marshmallow().Schema):
+#     class Meta:
+#         fields = ['id', 'username', 'password']
 
+# user_schema = UserSchema()
+# users_schema = UserSchema(many=True)
 
 
 
