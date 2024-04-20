@@ -20,7 +20,9 @@ class User(db.Model, UserMixin):
     posts = db.relationship("Post", backref='author')
     token = db.Column(db.String(100), nullable=True)
     # liked_posts = db.relationship("Post", secondary="like")  # below line is how to manage likes without a Like table
-    liked_post2 = db.relationship("Post", secondary="like2", lazy='dynamic') # gives a list of posts from current_user.  When user likes a post, they provide  apost id, which can be used as the query variable for the Post table, and then append it to the liked_posts column.  The system automatically commits to this table so your commit isn't needed
+    # gives a list of posts from current_user.  When user likes a post, they provide  apost id, which can be used as the query variable for the Post table, and then append it to the liked_posts column.  The system automatically commits to this table so your commit isn't needed
+    liked_post2 = db.relationship(
+        "Post", secondary="like2", lazy='dynamic', back_populates="likers2", overlaps="liked_post2")
     followed = db.relationship("User", 
         secondary='followers', 
         lazy='dynamic',
@@ -68,7 +70,9 @@ class Post(db.Model):
     date_created = db.Column(db.DateTime,nullable=False, default= lambda: datetime.now(timezone.utc))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable = False) # Reference the default table name and column using dot notation - 'user id'
     # likers = db.relationship("User", secondary="like")
-    likers2 = db.relationship("User", secondary="like2") # added 2 to secondary when using variable table below like_count function below
+    # added 2 to secondary when using variable table below like_count function below
+    likers2 = db.relationship(
+        "User", secondary="like2", back_populates="liked_post2", overlaps="likers2")
     # REMEBER: Foreign Keys need to be thought out -> ERD
 
     def __init__(self, title, img_url, caption, user_id):

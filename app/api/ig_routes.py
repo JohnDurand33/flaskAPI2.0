@@ -9,12 +9,15 @@ from ..apiauthhelper import token_auth_required
 @api.get('/posts') #route shortcut for get request = -> 'get' instead of 'route' in decorator
 def get_all_posts_API():
     posts = Post.query.order_by(Post.date_created.desc()).all() #.desc() orders the posts by date created in descending order
-    
-    return {
-        'status': 'ok',
-        'results': len(posts),
-        'posts': [post.to_dict() for post in posts]
-    }, 200 
+
+    if posts:
+        return jsonify({
+            'status': 'ok',
+            'results': len(posts),
+            'posts': [post.to_dict() for post in posts]
+        }), 200 
+    else:
+        return jsonify({"status": "not ok", "message": "No posts found"}), 404
 
 @api.get('/posts/<post_id>') 
 def get_a_post_api(post_id):
@@ -60,17 +63,50 @@ def create_post_api(user):
 @api.post('/posts/like/<post_id>')
 @token_auth_required
 def like_post_API(post_id, user):
-    post = Post.query.get(post_id)
+    try:
+        # post = Post.query.filter_by(id=post_id).first()   ###### OR ######
+        post = Post.query.get(post_id)
+        current_user = User.query.filter_by(id=user.id).first()
 
-    current_user = User.query.filter_by(user.id).first()
-    if post:
-        if post not in current_user.liked_post2:
-            current_user.liked_post2.append(post)
+        if post:
+            if post not in current_user.liked_post2:
+                current_user.liked_post2.append(post)
+                db.session.commit()
+
+                return jsonify({
+                    "status": "ok",
+                    "message": "Post liked successfully"
+                })
+            
+            else:
+                return jsonify({
+                    "status": "not ok",
+                    "message": "Post already liked"
+                }), 404
+
+    except Exception as e:
+        return jsonify({
+            "status": "not ok",
+            "message": "Post not found",
+            "details": f"{e}"
+        }), 404
+
+
+@api.post('/posts/unlike/<post_id>')
+@token_auth_required
+def unlike_post_API(post_id, user):
+
+    try:
+        current_user = User.query.filter_by(id=user.id).first()
+        post = current_user.liked_post2.filter_by(id=post_id).first()
+
+        if post:
+            current_user.liked_post2.remove(post)
             db.session.commit()
 
             return jsonify({
                 "status": "ok",
-                "message": "Post liked successfully"
+                "message":"Post unliked successfully!"
             })
         
         else:
@@ -78,40 +114,17 @@ def like_post_API(post_id, user):
                 "status": "not ok",
                 "message": "Post not found"
             }, 404
-    else:
-        return {
-            "status": "not ok",
-            "message": "Post not found"
-        }, 404
-
-
-@api.post('/posts/unlike/<post_id>')
-@token_auth_required
-def unlike_post_API(post_id, user):
-    
-    current_user = User.query.filter_by(user.id).first()
-    post = current_user.liked_post2.filter_by(id=post_id).first()
-
-    if post:
-        current_user.liked_post2.remove(post)
-        db.session.commit()
-
+    except Exception as e:
         return jsonify({
-            "status": "ok",
-            "message":"Post unliked successfully!"
-        })
-    
-    else:
-        return {
             "status": "not ok",
-            "message": "Post not found"
-        }, 404
+            "message": "Post not found",
+            "details": f"{e}"
+        }), 404
+
     
 
 @api.route('/signup', methods=['POST', 'OPTIONS'])
 def sign_up_API():
-    if request.method == 'OPTIONS':
-        return {}, 204
     
     try:
         data = request.json
