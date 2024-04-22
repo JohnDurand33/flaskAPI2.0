@@ -1,7 +1,7 @@
 from flask import render_template , request, redirect, url_for, session, flash, get_flashed_messages, abort
 from app import app
 from .forms import SignUpForm, LogInForm
-from .models import User, db, like2
+from .models import User, Post, db
 from flask_login import login_user, logout_user, login_required, current_user
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
