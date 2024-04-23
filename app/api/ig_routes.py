@@ -3,23 +3,26 @@ from . import api
 from ..models import User, Post, db
 from werkzeug.security import check_password_hash
 import base64
-from ..apiauthhelper import token_auth_required
+from ..apiauthhelper import token_auth, basic_auth, token_auth_required, basic_auth_required
 
+# like and unlike post routes: One uses a built in decorator and one of our custom decorators for contrast!
 
 @api.get('/posts')
 def get_all_posts_API():
-    
     posts = Post.query.order_by(Post.date_created.desc()).all()
+    user = None
 
-    if posts:
-        return {
-            'status': 'ok',
-            'results': len(posts),
-            'posts': [post.to_dict() for post in posts]
-        }, 200
-    else:
-        return jsonify({"status": "not ok", "message": "No posts found"}), 404
-
+    if "Authorization" in request.headers:
+        val = request.headers['Authorization']
+        type, token = val.split()
+        if type == 'Bearer':
+            token = token
+            user = User.query.filter_by(token=token).first()
+    return {
+        'status': 'ok',
+        'results': len(posts),
+        'posts': [post.to_dict(user) for post in posts]
+    }, 200
 
 @api.get('/posts/<post_id>')
 def get_a_post_api(post_id):
@@ -35,7 +38,6 @@ def get_a_post_api(post_id):
             'status': 'not ok',
             'message': 'post not found'
         }, 404
-
 
 @api.route('/posts/create', methods=['POST'])
 @token_auth_required
@@ -63,9 +65,8 @@ def create_post_api(user):
             e: f"{e}"
         }, 400
 
-
 @api.route('/posts/like/<post_id>', methods=['POST'])
-@token_auth_required
+@token_auth_required #constrast with the built in decorator below
 def like_post_API(post_id, user):
     post = Post.query.get(post_id)
 
@@ -85,11 +86,11 @@ def like_post_API(post_id, user):
     db.session.commit()
     return jsonify({'status': 'ok', 'message': 'Post liked successfully'}), 200
 
-
 @api.route('/posts/unlike/<int:post_id>', methods=['POST'])
-@token_auth_required
-def unlike_post_API(post_id, user):
+@token_auth.login_required  # constrast with our designed custom decorator above
+def unlike_post_API(post_id):
     try:
+        user = token_auth.current_user()
         # Use relationship to find if the post is liked by the user
         post = user.liked_posts.filter(Post.id == post_id).first()
 
@@ -120,7 +121,6 @@ def unlike_post_API(post_id, user):
             "message": "Error processing request",
             "details": str(e)
         }), 500
-
 
 @api.route('/signup', methods=['POST'])
 def sign_up_API():
@@ -168,55 +168,16 @@ def sign_up_API():
             'details': str(e)
         }), 500
 
-
 @api.route('/login', methods=['POST'])
-def login_API():
-    try:
-        val = request.headers['Authorization']
-        encoded_version = val.split()[1]
-
-        x = base64.b64decode(
-        encoded_version.encode('ascii')).decode('ascii')
-        username, password = x.split(':')
-
-        if not username:
-
-            return {
-                'status': 'not ok',
-                'message': 'No Authorization header provided'
-            }, 401
-
-        else:
-
-            user = User.query.filter_by(username=username).first()
-
-            if not user:
-                return jsonify({
-                    'status': 'not ok',
-                    'message': 'User / password combination not found - 1'
-                }), 400
-
-            if not check_password_hash(user.password, password):
-                return jsonify({
-                    'status': 'not ok',
-                    'message': 'User / password combination not found - 2',
-                }), 400
-
-            else:
-                return jsonify({
-                    'status': 'ok',
-                    'message': 'User logged in successfully',
-                    # wrapping key in quotes will only pass user.to_dict() AS A string, ONLY = don't wrap in quotes
-                    'user': user.to_dict(),
-                }), 200
-
-                # Return user info as needed, in reality you want to create expiration system(flask token package!)
-    except:
-        return jsonify({
-            'status': 'not ok',
-            'message': 'User / password combination not found',
-        }), 400
-
+# @basic_auth_required
+@basic_auth.login_required # This is the same as the above but user is not passed in their decorator function, so we need to access it from current_user
+def login_API(): #before we had the flask basic_auth.verify_password decorator, the definition of the login_API function was: def login_API(user)
+    user = basic_auth.current_user()
+    return jsonify({
+        'status': 'ok',
+        'message': 'User logged in successfully',
+        'user': user.to_dict()
+    }), 200
 
 @api.route('/logout', methods=['POST'])
 @token_auth_required

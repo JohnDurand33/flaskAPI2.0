@@ -70,8 +70,7 @@ class User(db.Model, UserMixin):
             'date_created': self.date_created,
             'token': self.token,
             'followed_count': len(self.followers.all()),
-            'following_count': len(self.followed.all()),
-            'liked_posts': [post.id for post in self.liked_posts.all()]
+            'following_count': len(self.followed.all())
         }
 
 
@@ -114,7 +113,7 @@ class Post(db.Model):
         return len(self.likers)
 
     def to_dict(self, user=None):
-        liked_by_user = user in self.likers if user!=None else False
+        
         return {
             'id': self.id,
             'title': self.title,
@@ -124,7 +123,7 @@ class Post(db.Model):
             'author': self.author.username if self.author else "Unknown",
             'author_id': self.author.id if self.author else None,
             'like_count': self.like_count(),
-            'liked': liked_by_user
+            'liked': user in self.likers
         }
 # class Like(db.Model):
 #     __tablename__ = 'like'
