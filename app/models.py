@@ -96,6 +96,7 @@ class Post(db.Model):
                              default=lambda: datetime.now(timezone.utc))
 # Reference the default table name and column using dot notation - 'user id'
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
 
     likers = db.relationship(
         "User", secondary="likes", back_populates="liked_posts", overlaps="likers")
@@ -112,16 +113,18 @@ class Post(db.Model):
     def like_count(self):
         return len(self.likers)
 
-    def to_dict(self):
+    def to_dict(self, user=None):
+        liked_by_user = user in self.likers if user!=None else False
         return {
             'id': self.id,
             'title': self.title,
             'img_url': self.img_url,
             'caption': self.caption,
-            'date_created': self.date_created,
-            'author': self.author.username,
-            'author_id': self.author.id,
+            'date_created': self.date_created.isoformat(),
+            'author': self.author.username if self.author else "Unknown",
+            'author_id': self.author.id if self.author else None,
             'like_count': self.like_count(),
+            'liked': liked_by_user
         }
 # class Like(db.Model):
 #     __tablename__ = 'like'

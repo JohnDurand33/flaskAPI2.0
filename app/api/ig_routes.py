@@ -1,4 +1,4 @@
-from flask import request, jsonify
+from flask import request, jsonify, g
 from . import api
 from ..models import User, Post, db
 from werkzeug.security import check_password_hash
@@ -8,15 +8,15 @@ from ..apiauthhelper import token_auth_required
 
 @api.get('/posts')
 def get_all_posts_API():
-    # .desc() orders the posts by date created in descending order
+    
     posts = Post.query.order_by(Post.date_created.desc()).all()
 
     if posts:
-        return jsonify({
+        return {
             'status': 'ok',
             'results': len(posts),
             'posts': [post.to_dict() for post in posts]
-        }), 200
+        }, 200
     else:
         return jsonify({"status": "not ok", "message": "No posts found"}), 404
 
@@ -40,18 +40,15 @@ def get_a_post_api(post_id):
 @api.route('/posts/create', methods=['POST'])
 @token_auth_required
 def create_post_api(user):
-    print('create post api beginning')
     try:
-        print('try block beginning')
         data = request.json
-        print(f'initial fetch executed: data: {data}')
+        
         title = data['title']
         img_url = data['img_url']
         caption = data.get('caption', '')
         user_id = user.id
 
         post = Post(title, img_url, caption, user_id)
-        print(f'post query executed successfully, post: {post}')
         db.session.add(post)
         db.session.commit()
         return {
@@ -70,69 +67,59 @@ def create_post_api(user):
 @api.route('/posts/like/<post_id>', methods=['POST'])
 @token_auth_required
 def like_post_API(post_id, user):
-    try:
-        post_to_like = Post.query.get(post_id)
-        # post = Post.query.filter_by(id=post_id).first()   ###### OR ########
+    post = Post.query.get(post_id)
 
-        if not post_to_like:
+    if post == None:
+        return {
+            "status": "not ok",
+            "message": "Post not found"
+        }, 404
+
+    if user in post.likers:
+        return {
+            "status": "not ok",
+            "message": "Post already liked by user"
+        }, 404
+
+    post.likers.append(user)
+    db.session.commit()
+    return jsonify({'status': 'ok', 'message': 'Post liked successfully'}), 200
+
+
+@api.route('/posts/unlike/<int:post_id>', methods=['POST'])
+@token_auth_required
+def unlike_post_API(post_id, user):
+    try:
+        # Use relationship to find if the post is liked by the user
+        post = user.liked_posts.filter(Post.id == post_id).first()
+
+        if not post:
             return jsonify({
                 "status": "not ok",
                 "message": "Post not found"
             }), 404
 
-        if post_to_like in user.liked_posts:
+        if user not in post.likers:
             return jsonify({
-            "status": "not ok",
-            "message": "Post already liked"
-        }), 404
+                "status": "not ok",
+                "message": "Post not liked by user"
+            }), 409
 
-        user.liked_posts.append(post_to_like)
-        print(f'Post | {post_to_like.title} now liked by user | {user.username}')
+        # Remove the post from the user's list of liked posts
+        user.liked_posts.remove(post)
         db.session.commit()
 
         return jsonify({
             "status": "ok",
-            "message": "Post liked successfully"
-        })
+            "message": f"Post '{post.title}' successfully unliked."
+        }), 200
 
     except Exception as e:
         return jsonify({
             "status": "not ok",
-            "message": "Post not found",
-            "details": f"{e}"
-        }), 404
-
-
-@api.route('/posts/unlike/<post_id>', methods=['POST'])
-@token_auth_required
-def unlike_post_API(post_id, user):
-
-    try:
-        current_user = User.query.filter_by(user.id).first()
-        post = current_user.liked_posts.filter_by(post_id).first()
-
-        if post:
-            current_user.liked_posts.remove(post)
-            print(f'Post | {post.title} now unliked by current user |{
-                current_user.username}')
-            db.session.commit()
-
-            return jsonify({
-                "status": "ok",
-                "message": "Post unliked successfully!"
-            })
-
-        else:
-            return {
-                "status": "not ok",
-                "message": "Post not found"
-            }, 404
-    except Exception as e:
-        return jsonify({
-            "status": "not ok",
-            "message": "Post not found",
-            "details": f"{e}"
-        }), 404
+            "message": "Error processing request",
+            "details": str(e)
+        }), 500
 
 
 @api.route('/signup', methods=['POST'])
@@ -185,39 +172,57 @@ def sign_up_API():
 @api.route('/login', methods=['POST'])
 def login_API():
     try:
-        if "Authorization" in request.headers:
-            val = request.headers['Authorization']
-            encoded_version = val.split()[1]
+        val = request.headers['Authorization']
+        encoded_version = val.split()[1]
 
-            x = base64.b64decode(
-                encoded_version.encode('ascii')).decode('ascii')
-            username, password = x.split(':')
-            print(username)
+        x = base64.b64decode(
+        encoded_version.encode('ascii')).decode('ascii')
+        username, password = x.split(':')
 
-        else:
+        if not username:
+
             return {
                 'status': 'not ok',
                 'message': 'No Authorization header provided'
             }, 401
 
-        user = User.query.filter_by(username=username).first()
+        else:
 
-        if not user:
-            return jsonify({
-                'status': 'not ok',
-                'message': 'No User'
-            }), 400
+            user = User.query.filter_by(username=username).first()
 
-        if check_password_hash(user.password, password):
-            return jsonify({
-                'status': 'ok',
-                'message': 'User logged in successfully',
-                # wrapping this in quotes will pass this string as the only user attribute
-                'user': user.to_dict(),
-            }), 200
-        # Return user info as needed, in reality you want to create expiration system(flask token package!)
+            if not user:
+                return jsonify({
+                    'status': 'not ok',
+                    'message': 'User / password combination not found - 1'
+                }), 400
+
+            if not check_password_hash(user.password, password):
+                return jsonify({
+                    'status': 'not ok',
+                    'message': 'User / password combination not found - 2',
+                }), 400
+
+            else:
+                return jsonify({
+                    'status': 'ok',
+                    'message': 'User logged in successfully',
+                    # wrapping key in quotes will only pass user.to_dict() AS A string, ONLY = don't wrap in quotes
+                    'user': user.to_dict(),
+                }), 200
+
+                # Return user info as needed, in reality you want to create expiration system(flask token package!)
     except:
         return jsonify({
             'status': 'not ok',
             'message': 'User / password combination not found',
         }), 400
+
+
+@api.route('/logout', methods=['POST'])
+@token_auth_required
+def logout_API(user):
+        return jsonify({
+            'status': 'ok',
+            'message': 'User logged out successfully',
+            'logged_out_user': user.to_dict()
+        }), 200

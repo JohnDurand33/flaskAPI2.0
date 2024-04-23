@@ -1,32 +1,63 @@
-from flask import request
+from flask import request, jsonify   #RESEARCH TOKEN AUTH IN FLASK AND REACT
+from functools import wraps
 from .models import User
+from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth
+
+basic_auth = HTTPBasicAuth()
+token_auth = HTTPTokenAuth()
+
 
 def token_auth_required(func):
+    # @wraps(func)
+    def decorated(*args, **kwargs):
+            if "Authorization" not in request.headers:
+                return jsonify({'status': 'not ok', 'message': 'Authentication required'}), 401
 
+            val = request.headers['Authorization']
+            parts = val.split()
+
+            if len(parts) == 2 and parts[0] == 'Bearer':
+                token=parts[1]
+                try:
+                    user = User.query.filter_by(token=token).first()
+                    if user:
+                        return func(*args, **kwargs, user=user)
+                    else:
+                        raise ValueError("User not found")
+
+                except Exception as e:
+                    return jsonify({'status': 'not ok', 'message': 'Authentication failed', 'details': str(e)}), 401
+
+            else:
+                return jsonify({'status': 'not ok', 'message': 'Incorrect authorization format'}), 401
+
+        decorated.__name__ = func.__name__
+        return decorated
+
+def token_auth_required(func):
+    @wraps(func)
     def decorated(*args, **kwargs):
 
-        if "Authorization" in request.headers:
-            val = request.headers['Authorization']
-            type, token = val.split()
+    #     if "Authorization" not in request.headers:
+    #         return jsonify({'status': 'not ok', 'message': 'Authentication required'}), 401
 
-            if type == 'Bearer':
-                token = token
-            else:
-                return {
-                    'status': 'not ok',
-                    'message': 'Issue in inner code block'
-                }, 401
-        
-            user = User.query.filter_by(token=token).first()
+    #     val = request.headers['Authorization']
+    #     parts = val.split()
 
-            if user:
-                return func(user=user, *args, **kwargs)
-            
-        else:
-            return {
-                'status': 'not ok',
-                'message': 'Issue in outer code block'
-            }, 401
-    decorated.__name__ = func.__name__
-    return decorated
+    #     if len(parts) == 2 and parts[0] == 'Bearer':
+    #         token=parts[1]
+    #         try:
+    #             user = User.query.filter_by(token=token).first()
+    #             if user:
+    #                 return func(*args, **kwargs, user=user)
+    #             else:
+    #                 raise ValueError("User not found")
+                
+    #         except Exception as e:
+    #             return jsonify({'status': 'not ok', 'message': 'Authentication failed', 'details': str(e)}), 401
 
+    #     else:
+    #         return jsonify({'status': 'not ok', 'message': 'Incorrect authorization format'}), 401
+
+    # decorated.__name__ = func.__name__
+    # return decorated
