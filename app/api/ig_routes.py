@@ -37,28 +37,33 @@ def get_a_post_api(post_id):
         }, 404
 
 
-@api.post('/posts/create')
+@api.route('/posts/create', methods=['POST'])
 @token_auth_required
 def create_post_api(user):
+    print('create post api beginning')
     try:
-        if request.method == 'POST':
-            data = request.json
+        print('try block beginning')
+        data = request.json
+        print(f'initial fetch executed: data: {data}')
+        title = data['title']
+        img_url = data['img_url']
+        caption = data.get('caption', '')
+        user_id = user.id
 
-            title = data['title']
-            img_url = data['img_url']
-            caption = data.get('caption', '')
-
-            post = Post(title, img_url, caption, user.id)
-            db.session.add(post)
-            db.session.commit()
-            return {
-                'status': 'ok',
-                'message': 'Post created successfully',
-            }, 201
-    except:
+        post = Post(title, img_url, caption, user_id)
+        print(f'post query executed successfully, post: {post}')
+        db.session.add(post)
+        db.session.commit()
+        return {
+            'status': 'ok',
+            'message': 'Post created successfully',
+        }, 201
+    
+    except Exception as e:
         return {
             "status": "not ok",
-            'message': 'Not enough information to complete a post'
+            'message': 'Not enough information to complete a post',
+            e: f"{e}"
         }, 400
 
 
@@ -66,28 +71,29 @@ def create_post_api(user):
 @token_auth_required
 def like_post_API(post_id, user):
     try:
-        post = Post.query.filter_by(post_id).first()
-        # post = Post.query.filter_by(id=post_id).first()   ###### OR ######
+        post_to_like = Post.query.get(post_id)
+        # post = Post.query.filter_by(id=post_id).first()   ###### OR ########
 
-        current_user = User.query.filter_by(user.id).first()
-
-        if post:
-            if post.id not in current_user.liked_posts:
-                current_user.liked_posts.append(post.id)
-                print(f'Post | {post.title} now liked by {
-                      current_user.username}')
-                db.session.commit()
-
-                return jsonify({
-                    "status": "ok",
-                    "message": "Post liked successfully"
-                })
-
-        else:
+        if not post_to_like:
             return jsonify({
                 "status": "not ok",
-                "message": "Post already liked"
+                "message": "Post not found"
             }), 404
+
+        if post_to_like in user.liked_posts:
+            return jsonify({
+            "status": "not ok",
+            "message": "Post already liked"
+        }), 404
+
+        user.liked_posts.append(post_to_like)
+        print(f'Post | {post_to_like.title} now liked by user | {user.username}')
+        db.session.commit()
+
+        return jsonify({
+            "status": "ok",
+            "message": "Post liked successfully"
+        })
 
     except Exception as e:
         return jsonify({

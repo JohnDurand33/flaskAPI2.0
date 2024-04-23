@@ -25,7 +25,7 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(100), nullable=False, unique=True)
     password = db.Column(db.String, nullable=False)
     date_created = db.Column(db.DateTime,       nullable=False,
-                            default=lambda: datetime.now(timezone.utc))
+                             default=lambda: datetime.now(timezone.utc))
     posts = db.relationship("Post", backref='author')
     token = db.Column(db.String(100), nullable=True)
 
