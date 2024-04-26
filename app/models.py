@@ -142,3 +142,45 @@ class Post(db.Model):
 
 # user_schema = UserSchema()
 # users_schema = UserSchema(many=True)
+
+class Product(db.Model):
+    __tablename__ = 'product'
+    # By assigning PK as true, integer translates to 'Serial'
+    id = db.Column(db.Integer, primary_key=True)
+    product_name = db.Column(db.String(100), nullable=False)
+    img_url = db.Column(db.String, nullable=False)
+    description = db.Column(db.String(500))
+    price = db.Column(db.Float(10,2))
+    date_created = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+
+    def __init__(self, product_name, img_url, description, price):
+        self.product_name = product_name
+        self.description = description
+        self.img_url = img_url
+        self.price = price
+        # order of init needs to match order of backend route schema if used
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'product_name': self.product_name,
+            'img_url': self.img_url,
+            'description': self.description,
+            'price': self.price,
+            'date_created': self.date_created,
+        }
+
+    def __repr__(self):
+        return f"<Product {self.id} - {self.product_name}, ${self.price:.2f}>"
+
+class Cart(db.Model):
+    __tablename__ = 'cart'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete="CASCADE"), nullable = False)
+    #ondelete="CASCADE" will delete all the cart items associated with a user if the user is deleted
+    product_id = db.Column(db.Integer, db.ForeignKey('post.id', ondelete="CASCADE"), nullable=False)
+    #ondelete="CASCADE" will delete all the cart items associated with a product if the product is deleted
+    
+    def __init__(self, user_id, product_id):
+        self.user_id = user_id
+        self.product_id = product_id
