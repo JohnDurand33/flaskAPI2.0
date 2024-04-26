@@ -1,4 +1,4 @@
-from flask import request, jsonify, g
+from flask import request, jsonify, flash
 from . import api
 from ..models import User, Post, db
 from werkzeug.security import check_password_hash
@@ -27,12 +27,19 @@ def get_all_posts_API():
 @api.get('/posts/<post_id>')
 def get_a_post_api(post_id):
     post = Post.query.get(post_id)
+    user=None
     if post:
+        if "Authorization" in request.headers:
+            val = request.headers['Authorization']
+            type, token = val.split()
+            if type == 'Bearer':
+                token = token
+                user = User.query.filter_by(token=token).first()
+
         return {
             'status': 'ok',
-            'results': 1,
-            'post': post.to_dict()
-        }, 200
+            'post': post.to_dict(user)
+            },200
     else:
         return {
             'status': 'not ok',
@@ -66,8 +73,13 @@ def create_post_api(user):
         }, 400
 
 @api.route('/posts/like/<post_id>', methods=['POST'])
-@token_auth_required #constrast with the built in decorator below
-def like_post_API(post_id, user):
+def like_post_API(post_id):
+    if "Authorization" in request.headers:
+        val = request.headers['Authorization']
+        type, token = val.split()
+        if type == 'Bearer':
+            token = token
+            user = User.query.filter_by(token=token).first()
     post = Post.query.get(post_id)
 
     if post == None:
@@ -84,20 +96,29 @@ def like_post_API(post_id, user):
 
     post.likers.append(user)
     db.session.commit()
-    return jsonify({'status': 'ok', 'message': 'Post liked successfully'}), 200
+    return jsonify({'status': 'ok', 'message': 'Post liked successfully', 'liked': True}), 200
 
 @api.route('/posts/unlike/<int:post_id>', methods=['POST'])
-@token_auth.login_required  # constrast with our designed custom decorator above
 def unlike_post_API(post_id):
     try:
-        user = token_auth.current_user()
+        if "Authorization" in request.headers:
+            val = request.headers['Authorization']
+            type, token = val.split()
+            if type == 'Bearer':
+                token = token
+            try:
+                user = User.query.filter_by(token=token).first()
+            except: 
+                flash('User not found')
+                return jsonify({'status': 'not ok', 'message': 'User not found'}), 404
         # Use relationship to find if the post is liked by the user
-        post = user.liked_posts.filter(Post.id == post_id).first()
+        post = user.liked_posts.filter_by(id = post_id).first()
 
         if not post:
+            print("Post not liked or not found")
             return jsonify({
                 "status": "not ok",
-                "message": "Post not found"
+                "message": "Post not liked or not found"
             }), 404
 
         if user not in post.likers:
@@ -112,7 +133,8 @@ def unlike_post_API(post_id):
 
         return jsonify({
             "status": "ok",
-            "message": f"Post '{post.title}' successfully unliked."
+            "message": "Post successfully unliked.",
+            'liked': False
         }), 200
 
     except Exception as e:
@@ -184,6 +206,6 @@ def login_API(): #before we had the flask basic_auth.verify_password decorator, 
 def logout_API(user):
         return jsonify({
             'status': 'ok',
-            'message': 'User logged out successfully',
+            'message': f'{user.username} logged out successfully',
             'logged_out_user': user.to_dict()
         }), 200

@@ -20,7 +20,7 @@ basic_auth = HTTPBasicAuth()
 token_auth = HTTPTokenAuth()
 
 @basic_auth.verify_password
-def decorated(username, password):
+def verify_password(username, password):
     user = User.query.filter_by(username=username).first()
     if user:
         if check_password_hash(user.password, password):
@@ -33,7 +33,7 @@ def verify_token(token):
         return user
     
 def basic_auth_required(func):
-    # @wraps(func)
+    @wraps(func)
     def decorated(*args, **kwargs):
         if "Authorization" in request.headers:
             val = request.headers['Authorization']
@@ -50,7 +50,7 @@ def basic_auth_required(func):
             return jsonify({'status': 'not ok', 'message': 'There is no user with that username'}), 401
 
         if check_password_hash(user.password, password):
-            return func(*args, **kwargs, user=user)
+            return func(user=user, *args, **kwargs)
         
         else:
             return jsonify({
@@ -62,7 +62,7 @@ def basic_auth_required(func):
     return decorated
 
 def token_auth_required(func):
-    # @wraps(func)
+    @wraps(func)
     def decorated(*args, **kwargs):
         if "Authorization" in request.headers:
             val = request.headers['Authorization']
@@ -76,7 +76,7 @@ def token_auth_required(func):
             user = User.query.filter_by(token=token).first()
 
             if user:
-                return func(*args, **kwargs, user=user)
+                return func(user=user, *args, **kwargs)
             else:
                 return jsonify({'status': 'not ok', 'message': 'Invalid Token'}), 401
         

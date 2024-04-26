@@ -75,11 +75,11 @@ class User(db.Model, UserMixin):
 
 
 likes = db.Table('likes',  # good when you don't need to reference your joined table directly
-                 db.Column('user_id', db.Integer, db.ForeignKey(
-                     'user.id'), nullable=False),
-                 db.Column('post_id', db.Integer, db.ForeignKey(
-                     'post.id'), nullable=False)
-                 )  # THIS IS BETTER THAN CREATING A TABLE BECAUSE YOU CREATE RELATIONSHIP COLUMNS THAT ACT LIKE LISTS!  user.liked_posts and posts.in effect.
+                db.Column('user_id', db.Integer, db.ForeignKey(
+                    'user.id'), nullable=False),
+                db.Column('post_id', db.Integer, db.ForeignKey(
+                    'post.id'), nullable=False)
+                )  # THIS IS BETTER THAN CREATING A TABLE BECAUSE YOU CREATE RELATIONSHIP COLUMNS THAT ACT LIKE LISTS!  user.liked_posts and posts.in effect.
 
 # IMPORTANT $$$$$ = JOINED tables should be referenced through foreign keys
 
