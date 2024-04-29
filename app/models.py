@@ -150,7 +150,7 @@ class Product(db.Model):
     product_name = db.Column(db.String(100), nullable=False)
     img_url = db.Column(db.String, nullable=False)
     description = db.Column(db.String(500))
-    price = db.Column(db.Float(10,2))
+    price = db.Column(db.Numeric(10,2))
     date_created = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
     def __init__(self, product_name, img_url, description, price):
