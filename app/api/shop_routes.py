@@ -80,4 +80,5 @@ def get_cart_API(user):
 
     return {
         'status': 'ok',
+        'cart': cart,
     }, 200
