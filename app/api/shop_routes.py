@@ -10,30 +10,23 @@ from ..apiauthhelper import token_auth_required, basic_auth_required, basic_auth
 def get_all_products_API():
     products = Product.query.all()
 
-    if "Authorization" in request.headers:
-        val = request.headers['Authorization']
-        type, token = val.split()
-        if type == 'Bearer':
-            token = token
-            user = User.query.filter_by(token=token).first()
     return {
         'status': 'ok',
         'results': len(products),
         'products': [p.to_dict() for p in products]
     }, 200
 
-
 @api.post('/cart/add')
 @token_auth_required
 def add_to_cart_API(user):
-    data = request.json()
+    data = request.json
     product_id = data.get('product_id')
     product = Product.query.get(product_id)
 
     if product:
         cart_item = Cart(user.id, product.id)
         db.session.add(cart_item)
-        db.commit()
+        db.session.commit()
 
         return {
             'status': 'ok',
@@ -51,14 +44,14 @@ def add_to_cart_API(user):
 @api.post('/cart/remove')
 @token_auth_required
 def remove_from_cart_API(user):
-    data = request.json()
+    data = request.json
     product_id = data.get('product_id')
 
-    cart_item = Cart.query.filter_by(user_id=user.id, product_id=product_id).first()
+    cart_item = Cart.query.filter_by(user_id=user.id).filter_by(product_id=product_id).first()
 
     if cart_item:
         db.session.delete(cart_item)
-        db.commit()
+        db.session.commit()
 
         return {
             'status': 'ok',
@@ -76,7 +69,7 @@ def remove_from_cart_API(user):
 @token_auth_required
 def get_cart_API(user):
     cart = Cart.query.filter_by(user_id=user.id).all()
-    cart = [Product.query.filter_by(item.product_id) for item in cart]
+    cart = [Product.query.get(item.product_id).to_dict() for item in cart]
 
     return {
         'status': 'ok',

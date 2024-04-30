@@ -153,7 +153,7 @@ class Product(db.Model):
     price = db.Column(db.Numeric(10,2))
     date_created = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
-    def __init__(self, product_name, img_url, description, price):
+    def __init__(self, id, product_name, img_url, description, price):
         self.product_name = product_name
         self.description = description
         self.img_url = img_url
@@ -178,7 +178,7 @@ class Cart(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete="CASCADE"), nullable = False)
     #ondelete="CASCADE" will delete all the cart items associated with a user if the user is deleted
-    product_id = db.Column(db.Integer, db.ForeignKey('post.id', ondelete="CASCADE"), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id', ondelete="CASCADE"), nullable=False)
     #ondelete="CASCADE" will delete all the cart items associated with a product if the product is deleted
     
     def __init__(self, user_id, product_id):
