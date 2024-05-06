@@ -1,11 +1,14 @@
-from flask import request, jsonify, flash
+from flask import request, jsonify, flash, redirect
 from . import api
 from ..models import User, Post, db
 from werkzeug.security import check_password_hash
 import base64
 from ..apiauthhelper import token_auth, basic_auth, token_auth_required, basic_auth_required
+import stripe
+import os
 
 # like and unlike post routes: One uses a built in decorator and one of our custom decorators for contrast!
+
 
 @api.get('/posts')
 def get_all_posts_API():
@@ -209,3 +212,31 @@ def logout_API(user):
             'message': f'{user.username} logged out successfully',
             'logged_out_user': user.to_dict()
         }), 200
+
+
+######################## front end only shop backend routes ############################
+# FRONTEND_URL = os.environ.get('FRONTEND_URL')
+FRONTEND_URL = os.environ.get('FRONTEND_URL')
+stripe.api_key = os.environ.get('STRIPE_API_KEY')
+
+@api.route('/checkout', methods=['POST'])
+def stripe_checkout():
+    try:
+        data = request.form
+        print(f' data: {data}')
+        line_items = []
+        for price in data:
+
+            line_items.append({'price': price, 'quantity': data[price]})
+        print(f' line_items: {line_items}')
+
+        checkout_session = stripe.checkout.Session.create(
+            line_items=line_items,
+            mode='payment',
+            success_url=FRONTEND_URL + '?success=true',
+            cancel_url=FRONTEND_URL + '?canceled=true',
+        )
+    except Exception as e:
+        return str(e)
+
+    return redirect(checkout_session.url, code=303)
