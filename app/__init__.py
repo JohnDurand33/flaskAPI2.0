@@ -15,7 +15,7 @@ app = Flask(__name__)
 app.config.from_object(Config)
 
 CORS(app, resources={r"/api/*": {
-    "origins": "*",
+    "origins": "https://react-video-6-stripeshopapi.web.app",
     "allow_headers": ["Content-Type", "Authorization"],
     "methods": ["OPTIONS", "POST", "GET"]
 }})
